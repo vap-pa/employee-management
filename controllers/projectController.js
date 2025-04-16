@@ -1,4 +1,5 @@
 const { Project, Employee, Task } = require('../models');
+const { Op } = require('sequelize');
 
 // @desc    Get all projects
 // @route   GET /api/projects
@@ -16,11 +17,11 @@ exports.getProjects = async (req, res, next) => {
         model: Employee,
         as: 'teamMembers',
         attributes: ['id', 'name', 'email'],
-        through: { attributes: [] } // Exclude join table attributes
+        through: { attributes: [] }
       },
       {
         model: Task,
-        as: 'tasks',
+        as: 'projectTasks',
         include: [
           {
             model: Employee,
@@ -31,6 +32,7 @@ exports.getProjects = async (req, res, next) => {
       }
     ];
 
+    // Filtering projects by employee ID
     if (req.params.employeeId) {
       whereCondition = {
         [Op.or]: [
@@ -76,7 +78,7 @@ exports.getProject = async (req, res, next) => {
         },
         {
           model: Task,
-          as: 'tasks',
+          as: 'projectTasks',
           include: [
             {
               model: Employee,
@@ -222,7 +224,7 @@ exports.updateProject = async (req, res, next) => {
         },
         {
           model: Task,
-          as: 'tasks',
+          as: 'projectTasks',
           include: [
             {
               model: Employee,
@@ -332,7 +334,7 @@ exports.addProjectTask = async (req, res, next) => {
         },
         {
           model: Task,
-          as: 'tasks',
+          as: 'projectTasks',
           include: [
             {
               model: Employee,
@@ -362,7 +364,7 @@ exports.updateProjectTask = async (req, res, next) => {
       include: [
         {
           model: Task,
-          as: 'tasks',
+          as: 'projectTasks',
           where: { id: req.params.taskId }
         }
       ]
@@ -375,7 +377,7 @@ exports.updateProjectTask = async (req, res, next) => {
       });
     }
 
-    const task = project.tasks[0];
+    const task = project.projectTasks[0];
 
     // Make sure employee is task assignee or project manager or admin
     if (
@@ -406,7 +408,7 @@ exports.updateProjectTask = async (req, res, next) => {
         },
         {
           model: Task,
-          as: 'tasks',
+          as: 'projectTasks',
           include: [
             {
               model: Employee,
@@ -436,7 +438,7 @@ exports.deleteProjectTask = async (req, res, next) => {
       include: [
         {
           model: Task,
-          as: 'tasks',
+          as: 'projectTasks',
           where: { id: req.params.taskId }
         }
       ]
@@ -449,7 +451,7 @@ exports.deleteProjectTask = async (req, res, next) => {
       });
     }
 
-    const task = project.tasks[0];
+    const task = project.projectTasks[0];
 
     // Make sure employee is project manager or admin
     if (
@@ -479,7 +481,7 @@ exports.deleteProjectTask = async (req, res, next) => {
         },
         {
           model: Task,
-          as: 'tasks',
+          as: 'projectTasks',
           include: [
             {
               model: Employee,

@@ -1,41 +1,54 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db'); // Adjust the path to your sequelize config
 
-const leaveSchema = new mongoose.Schema({
-  employee: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Employee',
-    required: true,
-  },
+const Leave = sequelize.define('Leave', {
   leaveType: {
-    type: String,
-    enum: ['sick', 'casual', 'annual', 'maternity', 'paternity', 'unpaid'],
-    required: [true, 'Please select leave type'],
+    type: DataTypes.ENUM('sick', 'casual', 'annual', 'maternity', 'paternity', 'unpaid'),
+    allowNull: false,
   },
   startDate: {
-    type: Date,
-    required: [true, 'Please add start date'],
+    type: DataTypes.DATE,
+    allowNull: false,
   },
   endDate: {
-    type: Date,
-    required: [true, 'Please add end date'],
+    type: DataTypes.DATE,
+    allowNull: false,
   },
   reason: {
-    type: String,
-    required: [true, 'Please add reason'],
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   status: {
-    type: String,
-    enum: ['pending', 'approved', 'rejected'],
-    default: 'pending',
+    type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+    defaultValue: 'pending',
   },
-  approvedBy: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Employee',
+  // Define the relationships
+  employeeId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Employees', // Make sure this matches the table name of the Employee model
+      key: 'id',
+    },
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
+  approvedById: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: 'Employees', // Make sure this matches the table name of the Employee model
+      key: 'id',
+    },
   },
+}, {
+  timestamps: true,
 });
 
-module.exports = mongoose.model('Leave', leaveSchema);
+// Define associations
+Leave.associate = (models) => {
+  // Employee that is requesting the leave
+  Leave.belongsTo(models.Employee, { foreignKey: 'employeeId', as: 'employee' });
+
+  // Employee that approved the leave
+  Leave.belongsTo(models.Employee, { foreignKey: 'approvedById', as: 'approvedBy' });
+};
+
+module.exports = Leave;

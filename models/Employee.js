@@ -1,74 +1,78 @@
-const mongoose = require('mongoose');
-const validator = require('validator');
+const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
+const { sequelize } = require('../config/db');  // Import sequelize instance
 
-const employeeSchema = new mongoose.Schema({
+// Define the Employee model
+const Employee = sequelize.define('Employee', {
   name: {
-    type: String,
-    required: [true, 'Please add a name'],
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   email: {
-    type: String,
-    required: [true, 'Please add an email'],
+    type: DataTypes.STRING,
+    allowNull: false,
     unique: true,
-    lowercase: true,
-    validate: [validator.isEmail, 'Please provide a valid email'],
+    validate: {
+      isEmail: {
+        msg: 'Please provide a valid email',
+      },
+    },
   },
   password: {
-    type: String,
-    required: [true, 'Please add a password'],
-    minlength: 6,
-    select: false,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   role: {
-    type: String,
-    enum: ['employee', 'manager', 'admin'],
-    default: 'employee',
+    type: DataTypes.ENUM('employee', 'manager', 'admin'),
+    defaultValue: 'employee',
   },
   department: {
-    type: String,
-    required: [true, 'Please add a department'],
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   position: {
-    type: String,
-    required: [true, 'Please add a position'],
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   joiningDate: {
-    type: Date,
-    default: Date.now,
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
   },
   contactNumber: {
-    type: String,
-    required: [true, 'Please add a contact number'],
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   profilePicture: {
-    type: String,
-    default: 'default.jpg',
+    type: DataTypes.STRING,
+    defaultValue: 'default.jpg',
   },
   leavesTaken: {
-    type: Number,
-    default: 0,
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
   },
   funTaskPoints: {
-    type: Number,
-    default: 0,
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
+}, {
+  timestamps: true,
+  hooks: {
+    beforeCreate: async (employee) => {
+      if (employee.password) {
+        employee.password = await bcrypt.hash(employee.password, 12);
+      }
+    },
+    beforeUpdate: async (employee) => {
+      if (employee.changed('password')) {
+        employee.password = await bcrypt.hash(employee.password, 12);
+      }
+    },
   },
 });
 
-// Encrypt password before saving
-employeeSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
-});
-
-// Compare entered password with hashed password
-employeeSchema.methods.correctPassword = async function (enteredPassword) {
+// Add method for password comparison
+Employee.prototype.correctPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model('Employee', employeeSchema);
+module.exports = Employee;

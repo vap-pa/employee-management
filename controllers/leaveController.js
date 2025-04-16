@@ -16,12 +16,12 @@ exports.getLeaves = async (req, res, next) => {
       include: [
         {
           model: Employee,
-          as: 'employee',
+          as: 'employee',  // Matches the alias defined in associations
           attributes: ['id', 'name', 'email']
         },
         {
           model: Employee,
-          as: 'approvedBy',
+          as: 'approvedBy',  // Matches the alias defined in associations
           attributes: ['id', 'name', 'email']
         }
       ],
@@ -144,7 +144,7 @@ exports.updateLeaveStatus = async (req, res, next) => {
       });
     }
 
-    // Update leave status and approvedBy
+    // Update leave status and approvedById
     leave.status = req.body.status;
     leave.approvedById = req.employee.id;
 

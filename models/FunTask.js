@@ -1,38 +1,36 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db'); // Import sequelize instance
 
-const funTaskSchema = new mongoose.Schema({
+// Define the FunTask model
+const FunTask = sequelize.define('FunTask', {
   title: {
-    type: String,
-    required: [true, 'Please add a title'],
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   description: {
-    type: String,
-    required: [true, 'Please add a description'],
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   points: {
-    type: Number,
-    required: [true, 'Please add points'],
-  },
-  createdBy: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Employee',
-    required: true,
-  },
-  assignedTo: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Employee',
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
   },
   status: {
-    type: String,
-    enum: ['pending', 'completed', 'approved'],
-    default: 'pending',
+    type: DataTypes.ENUM('pending', 'completed', 'approved'),
+    defaultValue: 'pending',
   },
-  completedAt: Date,
+  completedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
   createdAt: {
-    type: Date,
-    default: Date.now,
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
   },
 });
 
-module.exports = mongoose.model('FunTask', funTaskSchema);
+// Define relationships (associations)
+FunTask.belongsTo(Employee, { foreignKey: 'createdBy', as: 'creator' });
+FunTask.belongsTo(Employee, { foreignKey: 'assignedTo', as: 'assignee' });
+
+module.exports = FunTask;

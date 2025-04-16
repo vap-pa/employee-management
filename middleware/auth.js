@@ -5,6 +5,7 @@ const Employee = require('../models/Employee');
 exports.protect = async (req, res, next) => {
   let token;
 
+  // Extract token from Authorization header
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
@@ -12,7 +13,9 @@ exports.protect = async (req, res, next) => {
     token = req.headers.authorization.split(' ')[1];
   }
 
+  // No token present
   if (!token) {
+    console.log('❌ No token found in request');
     return res.status(401).json({
       success: false,
       message: 'Not authorized to access this route',
@@ -20,10 +23,27 @@ exports.protect = async (req, res, next) => {
   }
 
   try {
+    // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.employee = await Employee.findById(decoded.id);
+    console.log('✅ Decoded token:', decoded);
+
+    // Fetch employee using Sequelize
+    const employee = await Employee.findByPk(decoded.id);
+    console.log('✅ Fetched employee:', employee ? employee.dataValues : null);
+
+    // Employee not found
+    if (!employee) {
+      return res.status(401).json({
+        success: false,
+        message: 'No employee found with this token',
+      });
+    }
+
+    // Attach employee to request
+    req.employee = employee;
     next();
   } catch (err) {
+    console.error('❌ JWT verification failed:', err.message);
     return res.status(401).json({
       success: false,
       message: 'Not authorized to access this route',

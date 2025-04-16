@@ -8,7 +8,7 @@ exports.getFunTasks = async (req, res, next) => {
     let whereCondition = {};
     
     if (req.params.employeeId) {
-      whereCondition.assignedToId = req.params.employeeId;
+      whereCondition.assignedTo = req.params.employeeId;  // Use correct field for foreign key
     }
 
     const funTasks = await FunTask.findAll({
@@ -78,7 +78,7 @@ exports.getFunTask = async (req, res, next) => {
 // @access  Private/Manager
 exports.createFunTask = async (req, res, next) => {
   try {
-    req.body.createdById = req.employee.id;
+    req.body.createdBy = req.employee.id;  // Correct field to be used in Sequelize
 
     const funTask = await FunTask.create(req.body);
 
@@ -130,7 +130,7 @@ exports.updateFunTask = async (req, res, next) => {
 
     // Make sure employee is task creator or admin
     if (
-      funTask.createdById !== req.employee.id &&
+      funTask.createdBy !== req.employee.id &&
       req.employee.role !== 'admin'
     ) {
       return res.status(403).json({
@@ -150,7 +150,7 @@ exports.updateFunTask = async (req, res, next) => {
 
     // If task is completed, update employee's points
     if (req.body.status === 'completed') {
-      const employee = await Employee.findByPk(funTask.assignedToId);
+      const employee = await Employee.findByPk(funTask.assignedTo);
       employee.funTaskPoints += funTask.points;
       await employee.save();
     }
@@ -195,7 +195,7 @@ exports.deleteFunTask = async (req, res, next) => {
 
     // Make sure employee is task creator or admin
     if (
-      funTask.createdById !== req.employee.id &&
+      funTask.createdBy !== req.employee.id &&
       req.employee.role !== 'admin'
     ) {
       return res.status(403).json({
